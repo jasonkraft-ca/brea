@@ -17,9 +17,11 @@ h1{font-size:22px;font-weight:600;margin-bottom:4px}
 .control-group label{font-size:11px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
 select{background:#f5f5f0;border:1px solid #ccc;border-radius:6px;padding:6px 10px;font-size:13px;color:#1a1a1a;cursor:pointer;min-width:120px}
 .tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
-.tab{padding:6px 14px;border-radius:8px;border:1px solid #ddd;background:#fff;color:#555;cursor:pointer;font-size:13px;transition:all .15s}
+.tab{padding:6px 14px;border-radius:8px;border:1px solid #ddd;background:#fff;color:#555;cursor:pointer;font-size:13px;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:1px}
 .tab:hover{background:#f0f0f0}
 .tab.active{background:#185FA5;color:#fff;border-color:#185FA5}
+.tab-label{font-size:13px;font-weight:500}
+.tab-avg{font-size:10px;opacity:.75;letter-spacing:.2px}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}
 .card{background:#f0f0eb;border-radius:8px;padding:12px 14px}
 .card-label{font-size:11px;color:#666;margin-bottom:4px;font-weight:500}
@@ -60,32 +62,13 @@ select{background:#f5f5f0;border:1px solid #ccc;border-radius:6px;padding:6px 10
     <p class="subtitle">California DOJ data &middot; 1985–2024 &middot; 473 monthly records &middot; Orange County</p>
   </header>
 
-  <div class="controls">
-    <div class="control-group">
-      <label>View</label>
-      <select id="viewMode">
-        <option value="annual">Annual totals</option>
-        <option value="monthly">Monthly detail</option>
-        <option value="seasonal">Seasonal patterns</option>
-      </select>
-    </div>
-    <div class="control-group">
-      <label>From year</label>
-      <select id="yearFrom"></select>
-    </div>
-    <div class="control-group">
-      <label>To year</label>
-      <select id="yearTo"></select>
-    </div>
-  </div>
-
   <div class="tabs" id="metricTabs">
-    <button class="tab active" data-metric="total">Total crime</button>
-    <button class="tab" data-metric="violent">Violent</button>
-    <button class="tab" data-metric="property">Property</button>
-    <button class="tab" data-metric="burglary">Burglary</button>
-    <button class="tab" data-metric="vehicle">Vehicle theft</button>
-    <button class="tab" data-metric="clearance">Clearance rate</button>
+    <button class="tab active" data-metric="total"><span class="tab-label">Total crime</span><span class="tab-avg" id="avg-total"></span></button>
+    <button class="tab" data-metric="violent"><span class="tab-label">Violent</span><span class="tab-avg" id="avg-violent"></span></button>
+    <button class="tab" data-metric="property"><span class="tab-label">Property</span><span class="tab-avg" id="avg-property"></span></button>
+    <button class="tab" data-metric="burglary"><span class="tab-label">Burglary</span><span class="tab-avg" id="avg-burglary"></span></button>
+    <button class="tab" data-metric="vehicle"><span class="tab-label">Vehicle theft</span><span class="tab-avg" id="avg-vehicle"></span></button>
+    <button class="tab" data-metric="clearance"><span class="tab-label">Clearance rate</span><span class="tab-avg" id="avg-clearance"></span></button>
   </div>
 
   <div class="cards" id="summaryCards"></div>
@@ -95,8 +78,6 @@ select{background:#f5f5f0;border:1px solid #ccc;border-radius:6px;padding:6px 10
       <div class="chart-title" id="chartTitle">Annual totals — Total crime</div>
       <label class="toggle-label"><input type="checkbox" id="showAllTypes"> By crime type</label>
     </div>
-    <div class="chart-legend" id="chartLegend"></div>
-    <div style="position:relative;height:300px"><canvas id="mainChart" role="img" aria-label="Crime trend chart for Brea, CA">Brea, CA crime statistics 1985–2024</canvas></div>
     <div class="slider-row" id="sliderRow">
       <span class="slider-label" id="sliderFromVal">1990</span>
       <div class="dual-range" id="dualRange">
@@ -106,6 +87,8 @@ select{background:#f5f5f0;border:1px solid #ccc;border-radius:6px;padding:6px 10
       </div>
       <span class="slider-label" id="sliderToVal">2024</span>
     </div>
+    <div class="chart-legend" id="chartLegend"></div>
+    <div style="position:relative;height:300px"><canvas id="mainChart" role="img" aria-label="Crime trend chart for Brea, CA">Brea, CA crime statistics 1985–2024</canvas></div>
   </div>
 
   <div class="chart-panel">
@@ -139,7 +122,7 @@ const CRIME_TYPES=[
   {label:"Rape",key:"ForRape_sum",clrKey:null,color:"#BE185D"},
 ];
 
-let currentMetric="total", currentView="annual", yearFrom=1990, yearTo=2024;
+let currentMetric="total", yearFrom=1990, yearTo=2024;
 let mainChart=null, selectedPoint=null, showAllTypes=false;
 
 function safe(v){return Math.max(0,v||0)}
@@ -232,49 +215,42 @@ function updateSummaryCards(){
     </div>`).join("");
 }
 
+function updateTabAverages(){
+  const ann=annualAgg(filteredData());
+  const n=ann.length||1;
+  Object.entries(METRIC_CFG).forEach(([key,cfg])=>{
+    const el=document.getElementById("avg-"+key);
+    if(!el) return;
+    let avg;
+    if(key==="clearance"){
+      avg=Math.round(ann.reduce((s,y)=>s+(y.clearRate||0),0)/n)+"%";
+    } else {
+      avg=Math.round(ann.reduce((s,y)=>s+safe(y[cfg.col]),0)/n).toLocaleString();
+    }
+    el.textContent=avg+"/yr avg";
+  });
+}
+
 function buildMainChart(){
   const rows=filteredData();
   const cfg=METRIC_CFG[currentMetric];
   const multiLine=showAllTypes&&currentMetric!=="clearance";
-  let labels,datasets=[];
+  const ann=annualAgg(rows);
+  const labels=ann.map(y=>String(y.Year));
+  let datasets;
 
-  if(currentView==="annual"){
-    const ann=annualAgg(rows);
-    labels=ann.map(y=>String(y.Year));
-    if(multiLine){
-      datasets=CRIME_TYPES.map(t=>({label:t.label,data:ann.map(y=>safe(y[t.key])),borderColor:t.color,backgroundColor:"transparent",fill:false,tension:.3,pointRadius:3,pointHoverRadius:5,borderWidth:2}));
-    } else {
-      datasets=[{label:cfg.label,data:ann.map(y=>getVal(y,currentMetric)),borderColor:cfg.color,backgroundColor:cfg.color+"22",fill:true,tension:.3,pointRadius:3,pointHoverRadius:5,borderWidth:2}];
-    }
-    document.getElementById("chartTitle").textContent="Annual totals — "+(multiLine?"By crime type":cfg.label);
-  } else if(currentView==="monthly"){
-    labels=rows.map(r=>MONTHS[r.Month-1]+" '"+String(r.Year).slice(2));
-    if(multiLine){
-      datasets=CRIME_TYPES.map(t=>({label:t.label,data:rows.map(r=>safe(r[t.key])),borderColor:t.color,backgroundColor:"transparent",fill:false,tension:.3,pointRadius:0,pointHoverRadius:4,borderWidth:1.5}));
-    } else {
-      datasets=[{label:cfg.label,data:rows.map(r=>getVal(r,currentMetric)),borderColor:cfg.color,backgroundColor:cfg.color+"22",fill:true,tension:.3,pointRadius:0,pointHoverRadius:5,borderWidth:2}];
-    }
-    document.getElementById("chartTitle").textContent="Monthly — "+(multiLine?"By crime type":cfg.label);
+  if(multiLine){
+    datasets=CRIME_TYPES.map(t=>({label:t.label,data:ann.map(y=>safe(y[t.key])),borderColor:t.color,backgroundColor:"transparent",fill:false,tension:.3,pointRadius:3,pointHoverRadius:5,borderWidth:2}));
   } else {
-    const seas=seasonalAgg(rows);
-    labels=seas.map(s=>s.label);
-    if(multiLine){
-      datasets=CRIME_TYPES.slice(0,4).map(t=>({label:t.label,data:seas.map(s=>safe(s[t.key])),borderColor:t.color,backgroundColor:"transparent",fill:false,tension:.3,pointRadius:3,pointHoverRadius:5,borderWidth:2}));
-    } else {
-      datasets=[{label:cfg.label,data:seas.map(s=>getVal(s,currentMetric)),borderColor:cfg.color,backgroundColor:cfg.color+"22",fill:true,tension:.3,pointRadius:4,pointHoverRadius:6,borderWidth:2}];
-    }
-    document.getElementById("chartTitle").textContent="Average by month — "+(multiLine?"By crime type":cfg.label)+" ("+yearFrom+"–"+yearTo+")";
+    datasets=[{label:cfg.label,data:ann.map(y=>getVal(y,currentMetric)),borderColor:cfg.color,backgroundColor:cfg.color+"22",fill:true,tension:.3,pointRadius:3,pointHoverRadius:5,borderWidth:2}];
   }
+
+  document.getElementById("chartTitle").textContent="Annual totals — "+(multiLine?"By crime type":cfg.label);
 
   const legendEl=document.getElementById("chartLegend");
-  if(multiLine){
-    legendEl.innerHTML=CRIME_TYPES.map(t=>`<span class="legend-item"><span class="legend-swatch" style="background:${t.color}"></span>${t.label}</span>`).join("");
-  } else {
-    legendEl.innerHTML=`<span class="legend-item"><span class="legend-swatch" style="background:${cfg.color}"></span>${cfg.label}</span>`;
-  }
-
-  const sliderRow=document.getElementById("sliderRow");
-  if(sliderRow) sliderRow.style.display=currentView==="seasonal"?"none":"flex";
+  legendEl.innerHTML=multiLine
+    ? CRIME_TYPES.map(t=>`<span class="legend-item"><span class="legend-swatch" style="background:${t.color}"></span>${t.label}</span>`).join("")
+    : `<span class="legend-item"><span class="legend-swatch" style="background:${cfg.color}"></span>${cfg.label}</span>`;
 
   const canvas=document.getElementById("mainChart");
   if(mainChart){mainChart.destroy();mainChart=null;}
@@ -285,16 +261,7 @@ function buildMainChart(){
       responsive:true,
       maintainAspectRatio:false,
       onClick(_,elements){
-        if(!elements.length){selectedPoint=null;}
-        else if(currentView==="annual"){
-          const ann=annualAgg(filteredData());
-          selectedPoint=ann[elements[0].index]?.Year??null;
-        } else if(currentView==="monthly"){
-          const r=filteredData()[elements[0].index];
-          selectedPoint=r?{year:r.Year,month:r.Month}:null;
-        } else {
-          selectedPoint=elements[0].index+1;
-        }
+        selectedPoint=elements.length ? (ann[elements[0].index]?.Year??null) : null;
         buildCrimeTable();
       },
       plugins:{
@@ -305,7 +272,7 @@ function buildMainChart(){
         }}}
       },
       scales:{
-        x:{ticks:{maxRotation:45,autoSkip:true,maxTicksLimit:currentView==="monthly"?24:40},grid:{color:"rgba(0,0,0,.05)"}},
+        x:{ticks:{maxRotation:45,autoSkip:true,maxTicksLimit:40},grid:{color:"rgba(0,0,0,.05)"}},
         y:{beginAtZero:true,ticks:{callback:v=>currentMetric==="clearance"?v+"%":v.toLocaleString()},grid:{color:"rgba(0,0,0,.05)"}}
       }
     }
@@ -318,16 +285,8 @@ function buildCrimeTable(){
   let rows,title;
 
   if(selectedPoint!==null){
-    if(currentView==="annual"){
-      rows=DATA.filter(r=>r.Year===selectedPoint);
-      title="Crime breakdown — "+selectedPoint;
-    } else if(currentView==="monthly"){
-      rows=DATA.filter(r=>r.Year===selectedPoint.year&&r.Month===selectedPoint.month);
-      title="Crime breakdown — "+MONTHS[selectedPoint.month-1]+" "+selectedPoint.year;
-    } else {
-      rows=DATA.filter(r=>r.Month===selectedPoint);
-      title="Crime breakdown — "+MONTHS[selectedPoint-1]+" (avg across years)";
-    }
+    rows=DATA.filter(r=>r.Year===selectedPoint);
+    title="Crime breakdown — "+selectedPoint;
   } else {
     rows=filteredData();
     title="Crime breakdown — "+yearFrom+(yearFrom!==yearTo?"–"+yearTo:"");
@@ -384,24 +343,17 @@ function syncSlider(){
 function render(){
   selectedPoint=null;
   updateSummaryCards();
+  updateTabAverages();
   buildMainChart();
   buildCrimeTable();
   syncSlider();
 }
 
-// Init year selectors
+// Init
 const years=[...new Set(DATA.map(r=>r.Year))].sort();
 const minYear=years[0],maxYear=years[years.length-1];
-const fromSel=document.getElementById("yearFrom");
-const toSel=document.getElementById("yearTo");
-years.forEach(y=>{fromSel.add(new Option(y,y));toSel.add(new Option(y,y));});
-fromSel.value=1990; toSel.value=2024;
 ["sliderFrom","sliderTo"].forEach(id=>{const el=document.getElementById(id);if(el){el.min=minYear;el.max=maxYear;}});
 
-// Dropdown events
-document.getElementById("viewMode").addEventListener("change",e=>{currentView=e.target.value;render();});
-fromSel.addEventListener("change",e=>{yearFrom=+e.target.value;if(yearFrom>yearTo){yearTo=yearFrom;toSel.value=yearFrom;}render();});
-toSel.addEventListener("change",e=>{yearTo=+e.target.value;if(yearTo<yearFrom){yearFrom=yearTo;fromSel.value=yearTo;}render();});
 document.getElementById("metricTabs").addEventListener("click",e=>{
   const btn=e.target.closest("[data-metric]");
   if(!btn) return;
@@ -411,28 +363,24 @@ document.getElementById("metricTabs").addEventListener("click",e=>{
   render();
 });
 
-// By-type toggle
 document.getElementById("showAllTypes").addEventListener("change",e=>{
   showAllTypes=e.target.checked;
   buildMainChart();
 });
 
-// Slider events
 document.getElementById("sliderFrom").addEventListener("input",e=>{
   let v=Math.min(+e.target.value,yearTo);
   yearFrom=v; e.target.value=v;
   document.getElementById("sliderFromVal").textContent=v;
-  fromSel.value=v;
   updateSliderFill();
-  updateSummaryCards(); buildMainChart(); buildCrimeTable();
+  updateSummaryCards(); updateTabAverages(); buildMainChart(); buildCrimeTable();
 });
 document.getElementById("sliderTo").addEventListener("input",e=>{
   let v=Math.max(+e.target.value,yearFrom);
   yearTo=v; e.target.value=v;
   document.getElementById("sliderToVal").textContent=v;
-  toSel.value=v;
   updateSliderFill();
-  updateSummaryCards(); buildMainChart(); buildCrimeTable();
+  updateSummaryCards(); updateTabAverages(); buildMainChart(); buildCrimeTable();
 });
 
 render();
