@@ -16,16 +16,28 @@ h1{font-size:22px;font-weight:600;margin-bottom:4px}
 .control-group{display:flex;flex-direction:column;gap:4px}
 .control-group label{font-size:11px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
 select{background:#f5f5f0;border:1px solid #ccc;border-radius:6px;padding:6px 10px;font-size:13px;color:#1a1a1a;cursor:pointer;min-width:120px}
-.tab-groups{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;margin-bottom:16px}
-.tab-group{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tab-groups{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;margin-bottom:10px;justify-content:space-between}
 .tab-group-multi{border:1px solid #ddd;border-radius:10px;padding:8px 10px;background:#fafaf8}
-.tab-group-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#aaa;margin-bottom:6px;width:100%}
+.tab-group-header{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.tab-group-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#aaa}
+.tab-group-hint{font-size:10px;color:#bbb;font-style:italic}
 .tab-group-buttons{display:flex;flex-wrap:wrap;gap:6px}
+.metric-check{display:flex;align-items:center;gap:7px;cursor:pointer;padding:6px 10px;border-radius:8px;border:1px solid #ddd;background:#fff;user-select:none;transition:all .15s}
+.metric-check:hover{background:#f0f0f0;border-color:#ccc}
+.metric-check.active{background:#eef4fc;border-color:#185FA5}
+.metric-check input[type=checkbox]{pointer-events:none;width:13px;height:13px;accent-color:#185FA5;flex-shrink:0;margin:0}
+.metric-swatch{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.metric-body{display:flex;flex-direction:column;gap:1px}
 .tab{padding:6px 14px;border-radius:8px;border:1px solid #ddd;background:#fff;color:#555;cursor:pointer;font-size:13px;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:1px}
 .tab:hover{background:#f0f0f0}
 .tab.active{background:#185FA5;color:#fff;border-color:#185FA5}
 .tab-label{font-size:13px;font-weight:500}
 .tab-avg{font-size:10px;opacity:.75;letter-spacing:.2px}
+.slider-container{margin-bottom:10px}
+.tbl-parent>td{font-weight:600}
+.tbl-parent-bar{display:inline-block;width:3px;height:13px;border-radius:1px;margin-right:8px;vertical-align:middle}
+.tbl-child>td{font-size:12px;color:#555}
+.tbl-child>td:first-child{padding-left:0;border-left-width:3px;border-left-style:solid}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}
 .card{background:#f0f0eb;border-radius:8px;padding:12px 14px}
 .card-label{font-size:11px;color:#666;margin-bottom:4px;font-weight:500}
@@ -67,25 +79,46 @@ select{background:#f5f5f0;border:1px solid #ccc;border-radius:6px;padding:6px 10
   </header>
 
   <div class="tab-groups" id="metricTabs">
-    <div class="tab-group">
-      <button class="tab active" data-metric="total"><span class="tab-label">Total crime</span><span class="tab-avg" id="avg-total"></span></button>
-      <button class="tab" data-metric="clearance"><span class="tab-label">Clearance rate</span><span class="tab-avg" id="avg-clearance"></span></button>
-    </div>
-    <div class="tab-group tab-group-multi">
-      <div class="tab-group-label">Compare types</div>
+    <div class="tab-group-multi">
+      <div class="tab-group-header">
+        <span class="tab-group-label">Categories</span>
+        <span class="tab-group-hint">multiple selections allowed</span>
+      </div>
       <div class="tab-group-buttons">
-        <button class="tab" data-metric="violent"><span class="tab-label">Violent</span><span class="tab-avg" id="avg-violent"></span></button>
-        <button class="tab" data-metric="property"><span class="tab-label">Property</span><span class="tab-avg" id="avg-property"></span></button>
-        <button class="tab" data-metric="burglary"><span class="tab-label">Burglary</span><span class="tab-avg" id="avg-burglary"></span></button>
-        <button class="tab" data-metric="vehicle"><span class="tab-label">Vehicle theft</span><span class="tab-avg" id="avg-vehicle"></span></button>
+        <div class="metric-check active" data-metric="total">
+          <input type="checkbox" checked tabindex="-1">
+          <span class="metric-swatch" style="background:#185FA5"></span>
+          <span class="metric-body"><span class="tab-label">Total crime</span><span class="tab-avg" id="avg-total"></span></span>
+        </div>
+        <div class="metric-check" data-metric="violent">
+          <input type="checkbox" tabindex="-1">
+          <span class="metric-swatch" style="background:#A32D2D"></span>
+          <span class="metric-body"><span class="tab-label">Violent</span><span class="tab-avg" id="avg-violent"></span></span>
+        </div>
+        <div class="metric-check" data-metric="property">
+          <input type="checkbox" tabindex="-1">
+          <span class="metric-swatch" style="background:#854F0B"></span>
+          <span class="metric-body"><span class="tab-label">Property</span><span class="tab-avg" id="avg-property"></span></span>
+        </div>
+        <div class="metric-check" data-metric="burglary">
+          <input type="checkbox" tabindex="-1">
+          <span class="metric-swatch" style="background:#0F6E56"></span>
+          <span class="metric-body"><span class="tab-label">Burglary</span><span class="tab-avg" id="avg-burglary"></span></span>
+        </div>
+        <div class="metric-check" data-metric="vehicle">
+          <input type="checkbox" tabindex="-1">
+          <span class="metric-swatch" style="background:#533AB7"></span>
+          <span class="metric-body"><span class="tab-label">Vehicle theft</span><span class="tab-avg" id="avg-vehicle"></span></span>
+        </div>
       </div>
     </div>
+    <button class="tab" id="clearanceBtn" data-metric="clearance" style="align-self:flex-start">
+      <span class="tab-label">Clearance rate</span>
+      <span class="tab-avg" id="avg-clearance"></span>
+    </button>
   </div>
 
-  <div class="chart-panel">
-    <div class="chart-header">
-      <div class="chart-title" id="chartTitle">Annual totals — Total crime</div>
-    </div>
+  <div class="slider-container">
     <div class="slider-row" id="sliderRow">
       <span class="slider-label" id="sliderFromVal">1990</span>
       <div class="dual-range" id="dualRange">
@@ -95,6 +128,10 @@ select{background:#f5f5f0;border:1px solid #ccc;border-radius:6px;padding:6px 10
       </div>
       <span class="slider-label" id="sliderToVal">2024</span>
     </div>
+  </div>
+
+  <div class="chart-panel">
+    <div class="chart-title" id="chartTitle">Annual totals — Total crime</div>
     <div class="chart-legend" id="chartLegend"></div>
     <div style="position:relative;height:300px"><canvas id="mainChart" role="img" aria-label="Crime trend chart for Brea, CA">Brea, CA crime statistics 1985–2024</canvas></div>
   </div>
@@ -132,8 +169,25 @@ const CRIME_TYPES=[
   {label:"Rape",key:"ForRape_sum",clrKey:null,color:"#BE185D"},
 ];
 
-const SINGLETON_METRICS=new Set(["total","clearance"]);
-const MULTI_METRICS=["violent","property","burglary","vehicle"];
+const SINGLETON_METRICS=new Set(["clearance"]);
+const MULTI_METRICS=["total","violent","property","burglary","vehicle"];
+const CRIME_HIERARCHY=[
+  {metricKey:"violent",label:"Violent crime",color:"#A32D2D",aggKey:"Violent_sum",clrKey:"ViolentClr_sum",children:[
+    {label:"Homicide",key:"Homicide_sum",clrKey:null},
+    {label:"Rape",key:"ForRape_sum",clrKey:null},
+    {label:"Robbery",key:"Robbery_sum",clrKey:null},
+    {label:"Agg. Assault",key:"AggAssault_sum",clrKey:null},
+  ]},
+  {metricKey:"property",label:"Property crime",color:"#854F0B",aggKey:"Property_sum",clrKey:"PropertyClr_sum",children:[
+    {label:"Burglary",key:"Burglary_sum",clrKey:"BurglaryClr_sum"},
+    {label:"Vehicle Theft",key:"VehicleTheft_sum",clrKey:"VehicleTheftClr_sum"},
+  ]},
+  {metricKey:null,label:"Arson",color:"#D97706",aggKey:null,clrKey:null,children:[
+    {label:"Structural",key:"TotalStructural_sum",clrKey:null},
+    {label:"Mobile",key:"TotalMobile_sum",clrKey:null},
+    {label:"Other",key:"TotalOther_sum",clrKey:null},
+  ]},
+];
 let activeMetrics=new Set(["total"]), yearFrom=1990, yearTo=2024;
 let mainChart=null, selectedPoint=null;
 
@@ -315,27 +369,50 @@ function buildCrimeTable(){
   }
   titleEl.textContent=title;
 
+  // Aggregate all keys referenced in hierarchy
   const agg={};
-  CRIME_TYPES.forEach(t=>{agg[t.key]=0;if(t.clrKey)agg[t.clrKey]=0;});
-  rows.forEach(r=>CRIME_TYPES.forEach(t=>{
-    agg[t.key]+=safe(r[t.key]);
-    if(t.clrKey)agg[t.clrKey]+=safe(r[t.clrKey]);
-  }));
+  CRIME_HIERARCHY.forEach(cat=>{
+    if(cat.aggKey){agg[cat.aggKey]=0;}
+    if(cat.clrKey){agg[cat.clrKey]=0;}
+    cat.children.forEach(c=>{agg[c.key]=0;if(c.clrKey)agg[c.clrKey]=0;});
+  });
+  rows.forEach(r=>Object.keys(agg).forEach(k=>{agg[k]+=safe(r[k]);}));
 
-  const total=CRIME_TYPES.reduce((s,t)=>s+agg[t.key],0);
+  const grandTotal=CRIME_HIERARCHY.reduce((s,cat)=>{
+    const v=cat.aggKey?agg[cat.aggKey]:cat.children.reduce((cs,c)=>cs+agg[c.key],0);
+    return s+v;
+  },0);
 
-  tableEl.innerHTML=`<table class="crime-table">
-<thead><tr><th>Crime type</th><th style="text-align:right">Count</th><th style="text-align:right">% of total</th><th style="text-align:right">Clearance</th></tr></thead>
-<tbody>
-${CRIME_TYPES.map(t=>{
-  const count=agg[t.key];
-  const pct=total>0?(count/total*100).toFixed(1):"0.0";
-  const clr=t.clrKey&&agg[t.key]>0?Math.round(agg[t.clrKey]/agg[t.key]*100)+"%":"—";
-  return `<tr><td><span class="tbl-swatch" style="background:${t.color}"></span>${t.label}</td><td style="text-align:right">${count.toLocaleString()}</td><td style="text-align:right">${pct}%</td><td style="text-align:right">${clr}</td></tr>`;
-}).join("")}
-<tr class="tbl-total"><td>Total</td><td style="text-align:right">${total.toLocaleString()}</td><td style="text-align:right">100%</td><td></td></tr>
-</tbody></table>${selectedPoint!==null?`<p class="selected-point-note">Showing selected point — <a href="#" id="clearPoint" style="color:#185FA5">Clear selection</a></p>`:""}`;
+  let html=`<table class="crime-table"><thead><tr><th>Crime type</th><th style="text-align:right">Count</th><th style="text-align:right">% of total</th><th style="text-align:right">Clearance</th></tr></thead><tbody>`;
 
+  CRIME_HIERARCHY.forEach(cat=>{
+    const catCount=cat.aggKey?agg[cat.aggKey]:cat.children.reduce((s,c)=>s+agg[c.key],0);
+    const catClr=cat.clrKey&&catCount>0?Math.round(agg[cat.clrKey]/catCount*100)+"%":"—";
+    const catPct=grandTotal>0?(catCount/grandTotal*100).toFixed(1):"0.0";
+    html+=`<tr class="tbl-parent" style="background:${cat.color}18"><td><span class="tbl-parent-bar" style="background:${cat.color}"></span>${cat.label}</td><td style="text-align:right">${catCount.toLocaleString()}</td><td style="text-align:right">${catPct}%</td><td style="text-align:right">${catClr}</td></tr>`;
+
+    cat.children.forEach(c=>{
+      const count=agg[c.key];
+      const pct=grandTotal>0?(count/grandTotal*100).toFixed(1):"0.0";
+      const clr=c.clrKey&&count>0?Math.round(agg[c.clrKey]/count*100)+"%":"—";
+      html+=`<tr class="tbl-child"><td style="border-left-color:${cat.color}55;padding-left:10px"><span style="display:inline-block;width:16px;color:#ccc;font-size:10px">└</span>${c.label}</td><td style="text-align:right">${count.toLocaleString()}</td><td style="text-align:right">${pct}%</td><td style="text-align:right">${clr}</td></tr>`;
+    });
+
+    // Implied remainder row (e.g. larceny inside property)
+    if(cat.aggKey){
+      const childSum=cat.children.reduce((s,c)=>s+agg[c.key],0);
+      const other=Math.max(0,catCount-childSum);
+      if(other>50){
+        const pct=grandTotal>0?(other/grandTotal*100).toFixed(1):"0.0";
+        html+=`<tr class="tbl-child"><td style="border-left-color:${cat.color}55;padding-left:10px"><span style="display:inline-block;width:16px;color:#ccc;font-size:10px">└</span>Other / Larceny</td><td style="text-align:right">${other.toLocaleString()}</td><td style="text-align:right">${pct}%</td><td style="text-align:right">—</td></tr>`;
+      }
+    }
+  });
+
+  html+=`<tr class="tbl-total"><td>Total</td><td style="text-align:right">${grandTotal.toLocaleString()}</td><td style="text-align:right">100%</td><td></td></tr></tbody></table>`;
+  if(selectedPoint!==null) html+=`<p class="selected-point-note">Showing ${selectedPoint} — <a href="#" id="clearPoint" style="color:#185FA5">Clear selection</a></p>`;
+
+  tableEl.innerHTML=html;
   const clrBtn=document.getElementById("clearPoint");
   if(clrBtn) clrBtn.addEventListener("click",e=>{e.preventDefault();selectedPoint=null;buildCrimeTable();});
 }
@@ -362,8 +439,19 @@ function syncSlider(){
   updateSliderFill();
 }
 
+function syncUI(){
+  document.querySelectorAll("[data-metric]").forEach(el=>{
+    const m=el.dataset.metric;
+    const active=activeMetrics.has(m);
+    el.classList.toggle("active",active);
+    const cb=el.querySelector("input[type=checkbox]");
+    if(cb) cb.checked=active;
+  });
+}
+
 function render(){
   selectedPoint=null;
+  syncUI();
   updateSummaryCards();
   updateTabAverages();
   buildMainChart();
@@ -377,12 +465,12 @@ const minYear=years[0],maxYear=years[years.length-1];
 ["sliderFrom","sliderTo"].forEach(id=>{const el=document.getElementById(id);if(el){el.min=minYear;el.max=maxYear;}});
 
 document.getElementById("metricTabs").addEventListener("click",e=>{
-  const btn=e.target.closest("[data-metric]");
-  if(!btn) return;
-  const m=btn.dataset.metric;
+  const target=e.target.closest("[data-metric]");
+  if(!target) return;
+  e.preventDefault();
+  const m=target.dataset.metric;
   if(SINGLETON_METRICS.has(m)){
     activeMetrics=new Set([m]);
-    document.querySelectorAll("[data-metric]").forEach(t=>t.classList.toggle("active",t.dataset.metric===m));
   } else {
     SINGLETON_METRICS.forEach(s=>activeMetrics.delete(s));
     if(activeMetrics.has(m)){
@@ -391,10 +479,6 @@ document.getElementById("metricTabs").addEventListener("click",e=>{
     } else {
       activeMetrics.add(m);
     }
-    document.querySelectorAll("[data-metric]").forEach(t=>{
-      if(SINGLETON_METRICS.has(t.dataset.metric)) t.classList.remove("active");
-      else t.classList.toggle("active",activeMetrics.has(t.dataset.metric));
-    });
   }
   render();
 });
