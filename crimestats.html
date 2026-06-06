@@ -98,7 +98,7 @@ const METRIC_CFG = {
 };
 const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-let currentMetric="total", currentView="annual", yearFrom=1985, yearTo=2024;
+let currentMetric="total", currentView="annual", yearFrom=1990, yearTo=2024;
 let mainChart=null, breakChart=null;
 
 function safe(v){return Math.max(0,v||0)}
@@ -307,7 +307,7 @@ years.forEach(y=>{
   fromSel.add(new Option(y,y));
   toSel.add(new Option(y,y));
 });
-fromSel.value=1985;
+fromSel.value=1990;
 toSel.value=2024;
 
 // Events
