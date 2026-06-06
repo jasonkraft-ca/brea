@@ -82,7 +82,7 @@ select{background:#f5f5f0;border:1px solid #ccc;border-radius:6px;padding:6px 10
 <div class="container">
   <header>
     <h1>Brea, CA — Crime Statistics Explorer</h1>
-    <p class="subtitle">California DOJ data &middot; 1985–2024 &middot; 473 monthly records &middot; Orange County</p>
+    <p class="subtitle">California DOJ data &middot; 1990–2024 &middot; Orange County</p>
   </header>
 
   <div id="metricTabs">
@@ -109,10 +109,10 @@ select{background:#f5f5f0;border:1px solid #ccc;border-radius:6px;padding:6px 10
 
   <div class="slider-container">
     <div class="slider-row" id="sliderRow">
-      <span class="slider-label" id="sliderFromVal">1985</span>
+      <span class="slider-label" id="sliderFromVal">1990</span>
       <div class="dual-range" id="dualRange">
         <div class="dual-range-fill" id="sliderFill"></div>
-        <input type="range" id="sliderFrom" min="1985" max="2024" value="1985">
+        <input type="range" id="sliderFrom" min="1990" max="2024" value="1990">
         <input type="range" id="sliderTo" min="1985" max="2024" value="2024">
       </div>
       <span class="slider-label" id="sliderToVal">2024</span>
@@ -138,7 +138,7 @@ select{background:#f5f5f0;border:1px solid #ccc;border-radius:6px;padding:6px 10
     <div id="crimeTable"></div>
   </div>
 
-  <p class="note">Source: California Department of Justice Crimes &amp; Clearances dataset (1985–2024). Clearance rate = crimes cleared &divide; crimes reported. Occasional negative values in source data reflect CADOJ statistical adjustments and are treated as zero. Arson data is sparse in earlier years.</p>
+  <p class="note">Source: California Department of Justice Crimes &amp; Clearances dataset (1990–2024). Clearance rate = crimes cleared &divide; crimes reported. Occasional negative values in source data reflect CADOJ statistical adjustments and are treated as zero. Arson data is sparse in earlier years.</p>
 </div>
 
 <script>
@@ -152,7 +152,6 @@ const METRIC_CFG = {
 const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const CRIME_METRICS=["total","violent","property"];
 const POPULATION={
-  1985:30400,1986:30900,1987:31400,1988:31900,1989:32400,
   1990:32873,1991:33100,1992:33350,1993:33600,1994:33850,
   1995:34100,1996:34350,1997:34600,1998:34900,1999:35150,
   2000:35641,2001:35938,2002:36858,2003:37804,2004:38361,
@@ -169,12 +168,15 @@ const CRIME_HIERARCHY=[
     {label:"Agg. Assault", key:"AggAssault_sum", clrKey:null,                  color:"#D44040"},
   ]},
   {metricKey:"property",label:"Property crime",color:"#854F0B",aggKey:"Property_sum",clrKey:"PropertyClr_sum",extraKeys:["arson"],children:[
-    {label:"Burglary",      key:"Burglary_sum",     clrKey:"BurglaryClr_sum",     color:"#0F6E56"},
-    {label:"Vehicle Theft", key:"VehicleTheft_sum", clrKey:"VehicleTheftClr_sum", color:"#533AB7"},
-    {label:"Arson",         key:"arson",            clrKey:null,                  color:"#C2580A"},
+    {label:"Burglary",       key:"Burglary_sum",     clrKey:"BurglaryClr_sum",     color:"#0F6E56"},
+    {label:"Larceny-theft",  key:"LTtotal_sum",      clrKey:"LTtotalClr_sum",      color:"#1A6B8A"},
+    {label:"Vehicle Theft",  key:"VehicleTheft_sum", clrKey:"VehicleTheftClr_sum", color:"#533AB7"},
+    {label:"Arson (structural)", key:"TotalStructural_sum", clrKey:null,           color:"#C2580A"},
+    {label:"Arson (mobile)",     key:"TotalMobile_sum",     clrKey:null,           color:"#D4720A"},
+    {label:"Arson (other)",      key:"TotalOther_sum",      clrKey:null,           color:"#E09030"},
   ]},
 ];
-let activeMetrics=new Set(["total"]), yearFrom=1985, yearTo=2024;
+let activeMetrics=new Set(["total"]), yearFrom=1990, yearTo=2024;
 let mainChart=null, perCapChart=null, selectedPoint=null;
 
 function safe(v){return Math.max(0,v||0)}
@@ -193,7 +195,7 @@ function addTotals(rows){
   }));
 }
 
-const DATA = addTotals(RAW);
+const DATA = addTotals(RAW.filter(r=>r.Year>=1990));
 
 function filteredData(){
   return DATA.filter(r=>r.Year>=yearFrom&&r.Year<=yearTo);
@@ -202,9 +204,9 @@ function filteredData(){
 function annualAgg(rows){
   const byYear={};
   rows.forEach(r=>{
-    if(!byYear[r.Year]) byYear[r.Year]={Year:r.Year,Violent_sum:0,Property_sum:0,Burglary_sum:0,VehicleTheft_sum:0,Homicide_sum:0,ForRape_sum:0,Robbery_sum:0,AggAssault_sum:0,ViolentClr_sum:0,PropertyClr_sum:0,BurglaryClr_sum:0,VehicleTheftClr_sum:0,total:0,totalClr:0,GrandTotClr_sum:0,TotalStructural_sum:0,TotalMobile_sum:0,TotalOther_sum:0,arson:0};
+    if(!byYear[r.Year]) byYear[r.Year]={Year:r.Year,Violent_sum:0,Property_sum:0,Burglary_sum:0,VehicleTheft_sum:0,LTtotal_sum:0,Homicide_sum:0,ForRape_sum:0,Robbery_sum:0,AggAssault_sum:0,ViolentClr_sum:0,PropertyClr_sum:0,BurglaryClr_sum:0,VehicleTheftClr_sum:0,LTtotalClr_sum:0,total:0,totalClr:0,GrandTotClr_sum:0,TotalStructural_sum:0,TotalMobile_sum:0,TotalOther_sum:0,arson:0};
     const y=byYear[r.Year];
-    ["Violent_sum","Property_sum","Burglary_sum","VehicleTheft_sum","Homicide_sum","ForRape_sum","Robbery_sum","AggAssault_sum","ViolentClr_sum","PropertyClr_sum","BurglaryClr_sum","VehicleTheftClr_sum","total","totalClr","TotalStructural_sum","TotalMobile_sum","TotalOther_sum","arson"].forEach(k=>y[k]+=safe(r[k]));
+    ["Violent_sum","Property_sum","Burglary_sum","VehicleTheft_sum","LTtotal_sum","Homicide_sum","ForRape_sum","Robbery_sum","AggAssault_sum","ViolentClr_sum","PropertyClr_sum","BurglaryClr_sum","VehicleTheftClr_sum","LTtotalClr_sum","total","totalClr","TotalStructural_sum","TotalMobile_sum","TotalOther_sum","arson"].forEach(k=>y[k]+=safe(r[k]));
   });
   return Object.values(byYear).map(y=>{
     const t=y.Violent_sum+y.Property_sum;
@@ -372,15 +374,6 @@ function buildCrimeTable(){
       html+=`<tr class="tbl-child"><td style="border-left-color:${childColor}88;padding-left:10px"><span style="display:inline-block;width:16px;color:#ccc;font-size:10px">└</span>${c.label}</td><td style="text-align:right">${count.toLocaleString()}</td><td style="text-align:right">${pct}%</td><td style="text-align:right">${clr}</td></tr>`;
     });
 
-    // Implied larceny row: Property_sum minus named children (burglary + vehicle; arson already a child)
-    if(cat.aggKey){
-      const namedChildSum=cat.children.filter(c=>c.key!=="arson").reduce((s,c)=>s+agg[c.key],0);
-      const other=Math.max(0,agg[cat.aggKey]-namedChildSum);
-      if(other>0){
-        const pct=grandTotal>0?(other/grandTotal*100).toFixed(1):"0.0";
-        html+=`<tr class="tbl-child"><td style="border-left-color:${cat.color}55;padding-left:10px"><span style="display:inline-block;width:16px;color:#ccc;font-size:10px">└</span>Larceny &amp; other</td><td style="text-align:right">${other.toLocaleString()}</td><td style="text-align:right">${pct}%</td><td style="text-align:right">—</td></tr>`;
-      }
-    }
   });
 
   html+=`<tr class="tbl-total"><td>Total</td><td style="text-align:right">${grandTotal.toLocaleString()}</td><td style="text-align:right">100%</td><td></td></tr></tbody></table>`;
